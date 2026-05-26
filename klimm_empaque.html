@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klimm — Calculadora de empaque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;
+  --surface:#FFFFFF;
+  --border:#E2E0D8;
+  --border-strong:#C8C6BC;
+  --text:#1A1A18;
+  --text-muted:#6B6960;
+  --text-hint:#A8A69E;
+  --accent:#1A6B4A;
+  --accent-bg:#E8F4EE;
+  --warn-bg:#FEF3E2;
+  --warn-text:#92560A;
+  --danger-bg:#FDECEA;
+  --danger-text:#8B2020;
+  --success-bg:#E8F4EE;
+  --success-text:#1A6B4A;
+  --info-bg:#E8EEF8;
+  --info-text:#1A3A6B;
+  --radius:10px;
+  --radius-sm:6px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:12px}
+.logo{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;letter-spacing:-0.5px;color:var(--text)}
+.logo span{color:var(--accent)}
+.logo-sub{font-size:12px;color:var(--text-muted);margin-left:4px;font-family:'DM Sans',sans-serif;font-weight:400}
+main{max-width:860px;margin:0 auto;padding:32px 24px}
+.tabs{display:flex;gap:2px;background:var(--border);border-radius:var(--radius-sm);padding:3px;width:fit-content;margin-bottom:24px}
+.tab{font-size:13px;padding:7px 18px;border-radius:calc(var(--radius-sm) - 2px);cursor:pointer;color:var(--text-muted);font-weight:400;transition:all 0.15s;border:none;background:none;font-family:'DM Sans',sans-serif}
+.tab.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.tab:hover:not(.active){color:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px}
+label{font-size:13px;color:var(--text-muted);display:block;margin-bottom:5px}
+input[type=text],input[type=url]{width:100%;font-size:13px;font-family:'DM Sans',sans-serif;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;transition:border 0.15s}
+input[type=text]:focus,input[type=url]:focus{border-color:var(--accent)}
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;font-weight:500}
+.btn-primary{background:var(--accent);color:#fff;border:none}
+.btn-primary:hover{background:#155a3d}
+.btn-secondary{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border-strong);color:var(--text)}
+.alert{font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-top:10px;line-height:1.5}
+.alert-info{background:var(--info-bg);color:var(--info-text)}
+.alert-warn{background:var(--warn-bg);color:var(--warn-text)}
+.alert-success{background:var(--success-bg);color:var(--success-text)}
+.alert-danger{background:var(--danger-bg);color:var(--danger-text)}
+.upload-area{border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-icon{font-size:32px;color:var(--text-hint);margin-bottom:8px}
+.upload-text{font-size:14px;color:var(--text-muted)}
+.upload-sub{font-size:12px;color:var(--text-hint);margin-top:4px}
+.chip{display:inline-block;font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;margin-right:4px}
+.chip-BULK_LONG{background:#E8EEF8;color:#1A3A6B}
+.chip-BULK_RIGID{background:#EEF0FB;color:#2D2980}
+.chip-LIQUID_20L{background:#FDECEA;color:#8B2020}
+.chip-LIQUID_5L{background:#FEF3E2;color:#92560A}
+.chip-PAPER_BULK{background:#E8F4EE;color:#1A6B4A}
+.chip-BOXABLE{background:#F1EFE8;color:#4A4840}
+.chip-BOXABLE_TOP{background:#FDECEA;color:#8B2020}
+.chip-missing{background:#F5F4F0;color:#A8A69E}
+.product-table{width:100%;border-collapse:collapse}
+.product-table th{font-size:11px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.05em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+.product-table td{font-size:13px;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.product-table tr:last-child td{border-bottom:none}
+.product-table tr:hover td{background:var(--bg)}
+.paquete{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px}
+.paquete-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.paquete-id{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text)}
+.paquete-dims{font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace}
+.paquete-items{font-size:12px;color:var(--text-muted);line-height:1.6}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px}
+.badge-fragil{background:var(--danger-bg);color:var(--danger-text)}
+.badge-arriba{background:var(--warn-bg);color:var(--warn-text)}
+.badge-none{background:var(--bg);color:var(--text-hint)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.summary-card{background:var(--bg);border-radius:var(--radius-sm);padding:14px 16px}
+.summary-label{font-size:11px;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.summary-value{font-size:22px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text)}
+.cajas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:4px}
+.caja-item{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.caja-name{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+.caja-spec{font-size:12px;color:var(--text-muted)}
+.cats-grid{display:flex;flex-wrap:wrap;gap:6px}
+.section-note{font-size:12px;color:var(--text-hint);margin-top:8px;line-height:1.5}
+hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">klimm<span>.</span> <span class="logo-sub">calculadora de empaque</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('config')" id="tab-config">Configuración</button>
+    <button class="tab" onclick="setTab('calc')" id="tab-calc">Calcular empaque</button>
+  </div>
+
+  <!-- CONFIGURACIÓN -->
+  <div id="pane-config">
+    <div class="card">
+      <div class="card-title">Google Sheets — catálogo de productos</div>
+      <label>URL del Google Sheet (debe ser público: "cualquiera con el enlace puede ver")</label>
+      <input type="url" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/...">
+      <div class="btn-row">
+        <button class="btn-primary" onclick="loadSheet()">↻ Cargar catálogo</button>
+        <button class="btn-secondary" onclick="window.open('https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit')">Ver plantilla de ejemplo ↗</button>
+      </div>
+      <div id="sheet-status"></div>
+      <p class="section-note" style="margin-top:12px">El Sheet debe tener una pestaña llamada <strong>Catalogo</strong> con columnas: <code>nombre</code>, <code>categoria_empaque</code>, <code>peso_kg</code>, <code>largo_cm</code>, <code>ancho_cm</code>, <code>alto_cm</code></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cajas estándar</div>
+      <div class="cajas-grid" id="cajas-display"></div>
+      <hr>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Agregar o modificar caja:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end">
+        <div><label>ID</label><input type="text" id="new-caja-id" placeholder="CAJA-B"></div>
+        <div><label>Largo (cm)</label><input type="text" id="new-largo" placeholder="60"></div>
+        <div><label>Ancho (cm)</label><input type="text" id="new-ancho" placeholder="40"></div>
+        <div><label>Alto (cm)</label><input type="text" id="new-alto" placeholder="40"></div>
+        <div><label>Peso máx (kg)</label><input type="text" id="new-peso" placeholder="30"></div>
+        <div style="padding-bottom:1px"><button class="btn-primary" onclick="addCaja()">+ Agregar</button></div>
+      </div>
+      <div id="caja-status"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Categorías de empaque</div>
+      <div class="cats-grid">
+        <span class="chip chip-BULK_LONG">BULK_LONG</span>
+        <span class="chip chip-BULK_RIGID">BULK_RIGID</span>
+        <span class="chip chip-LIQUID_20L">LIQUID_20L</span>
+        <span class="chip chip-LIQUID_5L">LIQUID_5L</span>
+        <span class="chip chip-PAPER_BULK">PAPER_BULK</span>
+        <span class="chip chip-BOXABLE">BOXABLE</span>
+        <span class="chip chip-BOXABLE_TOP">BOXABLE_TOP</span>
+      </div>
+      <p class="section-note" style="margin-top:10px">
+        <strong>BULK_LONG / BULK_RIGID:</strong> van solos emplayados &nbsp;·&nbsp;
+        <strong>LIQUID_20L:</strong> solo emplayado, etiqueta ESTE LADO ARRIBA &nbsp;·&nbsp;
+        <strong>LIQUID_5L:</strong> capa superior en caja o solo, etiquetas ESTE LADO ARRIBA + FRÁGIL &nbsp;·&nbsp;
+        <strong>PAPER_BULK:</strong> bulto original del fabricante &nbsp;·&nbsp;
+        <strong>BOXABLE:</strong> en caja sin restricción &nbsp;·&nbsp;
+        <strong>BOXABLE_TOP:</strong> capa superior, etiqueta FRÁGIL / NO INVERTIR
+      </p>
+    </div>
+  </div>
+
+  <!-- CALCULAR -->
+  <div id="pane-calc" class="hidden">
+    <div class="card">
+      <div class="card-title">Cotización PDF de Odoo</div>
+      <div class="upload-area" onclick="document.getElementById('pdf-input').click()" id="drop-zone">
+        <div class="upload-icon">⬆</div>
+        <div class="upload-text">Haz clic para seleccionar el PDF</div>
+        <div class="upload-sub" id="pdf-name">Formato: cotización exportada desde Odoo</div>
+      </div>
+      <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="handlePDF(this)">
+      <div id="pdf-status"></div>
+    </div>
+
+    <div id="products-section" class="hidden">
+      <div class="card">
+        <div class="card-title">Productos detectados en el PDF</div>
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th style="width:60px;text-align:center">Cant.</th>
+              <th style="width:130px">Categoría</th>
+              <th style="width:90px">Peso unit.</th>
+            </tr>
+          </thead>
+          <tbody id="products-body"></tbody>
+        </table>
+        <div id="match-summary"></div>
+      </div>
+      <div style="text-align:right;margin-bottom:16px">
+        <button class="btn-primary" onclick="calcularEmpaque()" style="padding:10px 24px;font-size:14px">Calcular empaque →</button>
+      </div>
+    </div>
+
+    <div id="result-section" class="hidden">
+      <div class="card">
+        <div class="card-title">Resumen del envío</div>
+        <div class="summary-grid" id="summary-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Paquetes para envío</div>
+        <div id="result-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let catalog={};
+let cajas=[{id:'CAJA-A',largo:40,ancho:40,alto:40,peso_max:25}];
+let detectedProducts=[];
+
+function setTab(t){
+  ['config','calc'].forEach(id=>{
+    document.getElementById('pane-'+id).classList.toggle('hidden',id!==t);
+    document.getElementById('tab-'+id).className='tab'+(id===t?' active':'');
+  });
+}
+
+function renderCajas(){
+  const el=document.getElementById('cajas-display');
+  el.innerHTML=cajas.map(c=>`
+    <div class="caja-item">
+      <div class="caja-name">${c.id}</div>
+      <div class="caja-spec">${c.largo} × ${c.ancho} × ${c.alto} cm</div>
+      <div class="caja-spec">máx ${c.peso_max} kg</div>
+      <button class="btn-secondary" style="margin-top:6px;font-size:11px;padding:3px 8px" onclick="removeCaja('${c.id}')">Eliminar</button>
+    </div>`).join('');
+}
+
+function addCaja(){
+  const id=document.getElementById('new-caja-id').value.trim();
+  const largo=parseFloat(document.getElementById('new-largo').value);
+  const ancho=parseFloat(document.getElementById('new-ancho').value);
+  const alto=parseFloat(document.getElementById('new-alto').value);
+  const peso=parseFloat(document.getElementById('new-peso').value);
+  const st=document.getElementById('caja-status');
+  if(!id||!largo||!ancho||!alto||!peso){st.innerHTML='<div class="alert alert-warn">Completa todos los campos de la caja.</div>';return;}
+  if(cajas.find(c=>c.id===id)){st.innerHTML='<div class="alert alert-warn">Ya existe una caja con ese ID.</div>';return;}
+  cajas.push({id,largo,ancho,alto,peso_max:peso});
+  renderCajas();
+  ['new-caja-id','new-largo','new-ancho','new-alto','new-peso'].forEach(id=>document.getElementById(id).value='');
+  st.innerHTML='<div class="alert alert-success">Caja agregada correctamente.</div>';
+  setTimeout(()=>st.innerHTML='',2500);
+}
+
+function removeCaja(id){
+  cajas=cajas.filter(c=>c.id!==id);
+  renderCajas();
+}
+
+function parseCSVRow(row){
+  const result=[];let cur='';let inQ=false;
+  for(let i=0;i<row.length;i++){
+    const ch=row[i];
+    if(ch==='"'){if(inQ&&row[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}
+    else if(ch===','&&!inQ){result.push(cur.trim());cur='';}
+    else{cur+=ch;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function normalizar(s){
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+
+async function loadSheet(){
+  const url=document.getElementById('sheet-url').value.trim();
+  const st=document.getElementById('sheet-status');
+  if(!url){st.innerHTML='<div class="alert alert-warn">Ingresa la URL del Sheet primero.</div>';return;}
+  const match=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(!match){st.innerHTML='<div class="alert alert-warn">URL no válida. Copia la URL completa del Sheet.</div>';return;}
+  const sheetId=match[1];
+  st.innerHTML='<div class="alert alert-info">Cargando catálogo...</div>';
+  try{
+    const csvUrl=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Catalogo`;
+    const res=await fetch(csvUrl);
+    if(!res.ok) throw new Error('fetch failed');
+    const text=await res.text();
+    const lines=text.trim().split('\n');
+    const cols=parseCSVRow(lines[0]).map(c=>c.toLowerCase().trim());
+    catalog={};
+    for(let i=1;i<lines.length;i++){
+      const vals=parseCSVRow(lines[i]);
+      const r={};
+      cols.forEach((c,j)=>{r[c]=vals[j]||null;});
+      if(r.nombre) catalog[normalizar(r.nombre)]=r;
+    }
+    const n=Object.keys(catalog).length;
+    st.innerHTML=`<div class="alert alert-success">✓ ${n} productos cargados del catálogo.</div>`;
+  }catch(e){
+    st.innerHTML='<div class="alert alert-warn">No se pudo cargar el Sheet. Verifica que sea público y que la pestaña se llame "Catalogo".</div>';
+  }
+}
+
+async function handlePDF(input){
+  const file=input.files[0];
+  if(!file) return;
+  document.getElementById('pdf-name').textContent=file.name;
+  document.getElementById('pdf-status').innerHTML='<div class="alert alert-info">Leyendo PDF...</div>';
+  try{
+    const ab=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let fullText='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i);
+      const tc=await page.getTextContent();
+      fullText+=tc.items.map(it=>it.str).join(' ')+'\n';
+    }
+    parsePDF(fullText);
+  }catch(e){
+    document.getElementById('pdf-status').innerHTML='<div class="alert alert-warn">Error al leer el PDF. Verifica que no esté protegido.</div>';
+  }
+}
+
+function parsePDF(text){
+  const lines=text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const products=[];
+  const qtyRe=/(\d+(?:\.\d+)?)\s*[Uu]nidades/;
+  const skipWords=['descripci','cantidad','precio','impuesto','importe','iva','subtotal','total','datos','bancarios','grupo','klimm','beneficiario','banco','plazo','t.rminos','p.gina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','m.xico','rfc'];
+  let i=0;
+  while(i<lines.length){
+    const line=lines[i];
+    const qm=line.match(qtyRe);
+    if(qm){
+      let nameLines=[];
+      let j=i-1;
+      while(j>=0&&!lines[j].match(qtyRe)){
+        const l=lines[j].trim();
+        const low=l.toLowerCase();
+        const skip=skipWords.some(w=>low.includes(w))||l.match(/^\$[\d,]+/)||l.match(/^\d+[\.,]\d+$/)||l.match(/^[A-Z0-9]{3,6}$/);
+        if(skip) break;
+        if(l.length>3) nameLines.unshift(l);
+        j--;
+      }
+      if(nameLines.length>0){
+        products.push({name:nameLines[0],qty:parseFloat(qm[1])});
+      }
+      i++;
+    } else {i++;}
+  }
+  detectedProducts=products;
+  renderProducts();
+}
+
+function getCatChip(cat){
+  if(!cat) return '<span class="chip chip-missing">sin datos</span>';
+  const c=String(cat).toUpperCase().trim();
+  return `<span class="chip chip-${c}">${c}</span>`;
+}
+
+function findFuzzy(key){
+  const keys=Object.keys(catalog);
+  for(const k of keys){
+    if(k.includes(key.substring(0,15))||key.includes(k.substring(0,15))) return catalog[k];
+  }
+  return null;
+}
+
+function renderProducts(){
+  const tbody=document.getElementById('products-body');
+  const hasCat=Object.keys(catalog).length>0;
+  let matched=0,missing=0;
+  tbody.innerHTML=detectedProducts.map(p=>{
+    const key=normalizar(p.name);
+    const data=catalog[key]||findFuzzy(key);
+    const cat=data?data.categoria_empaque:null;
+    const peso=data?data.peso_kg:null;
+    if(data) matched++; else missing++;
+    const statusColor=hasCat?(data?'var(--success-text)':'var(--danger-text)'):'var(--text-hint)';
+    const statusDot=hasCat?(data?'●':'○'):'·';
+    return `<tr>
+      <td style="color:var(--text)">${p.name} <span style="color:${statusColor};font-size:11px;margin-left:4px">${statusDot}</span></td>
+      <td style="text-align:center;color:var(--text-muted)">${p.qty}</td>
+      <td>${getCatChip(cat)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)">${peso!=null?peso+' kg':'—'}</td>
+    </tr>`;
+  }).join('');
+  const summary=document.getElementById('match-summary');
+  if(hasCat){
+    const pct=Math.round(matched/(matched+missing)*100)||0;
+    summary.innerHTML=`<div class="alert ${missing===0?'alert-success':'alert-warn'}" style="margin-top:10px">
+      ${matched} de ${matched+missing} productos encontrados en el catálogo (${pct}%)${missing>0?` — ${missing} sin datos, se omitirán del cálculo de peso`:''}.
+    </div>`;
+  } else {
+    summary.innerHTML='<div class="alert alert-warn" style="margin-top:10px">Sin catálogo cargado — ve a Configuración para conectar tu Google Sheet. El cálculo de empaque funcionará pero sin pesos ni dimensiones reales.</div>';
+  }
+  document.getElementById('pdf-status').innerHTML=`<div class="alert alert-success">✓ ${detectedProducts.length} productos detectados en el PDF.</div>`;
+  document.getElementById('products-section').classList.remove('hidden');
+  document.getElementById('result-section').classList.add('hidden');
+}
+
+function calcularEmpaque(){
+  const separados=[];
+  const paraCapar=[];
+
+  detectedProducts.forEach(p=>{
+    const key=normalizar(p.name);
+    const data=catalog[key]||findFuzzy(key);
+    const cat=data?String(data.categoria_empaque||'BOXABLE').toUpperCase().trim():'BOXABLE';
+    const peso=data?(parseFloat(data.peso_kg)||0):0;
+    const largo=data?(parseFloat(data.largo_cm)||0):0;
+    const ancho=data?(parseFloat(data.ancho_cm)||0):0;
+    const alto=data?(parseFloat(data.alto_cm)||0):0;
+
+    if(['BULK_LONG','BULK_RIGID'].includes(cat)){
+      for(let i=0;i<p.qty;i++) separados.push({name:p.name,cat,peso,etiquetas:[]});
+    } else if(cat==='LIQUID_20L'){
+      for(let i=0;i<p.qty;i++) separados.push({name:p.name,cat,peso,etiquetas:['ESTE LADO ARRIBA']});
+    } else if(cat==='LIQUID_5L'){
+      for(let i=0;i<p.qty;i++) paraCapar.push({name:p.name,cat,peso,largo,ancho,alto,top:true,etiquetas:['ESTE LADO ARRIBA','FRÁGIL / NO INVERTIR']});
+    } else if(cat==='PAPER_BULK'){
+      for(let i=0;i<p.qty;i++) separados.push({name:p.name,cat,peso,etiquetas:[]});
+    } else if(cat==='BOXABLE_TOP'){
+      for(let i=0;i<p.qty;i++) paraCapar.push({name:p.name,cat,peso,largo,ancho,alto,top:true,etiquetas:['FRÁGIL / NO INVERTIR']});
+    } else {
+      for(let i=0;i<p.qty;i++) paraCapar.push({name:p.name,cat,peso,largo,ancho,alto,top:false,etiquetas:[]});
+    }
+  });
+
+  const cajaRef=cajas[0];
+  const cajaVol=cajaRef.largo*cajaRef.ancho*cajaRef.alto;
+  const normales=paraCapar.filter(i=>!i.top);
+  const topItems=paraCapar.filter(i=>i.top);
+  const allItems=[...normales,...topItems];
+
+  const boxes=[];
+  let cur={items:[],pesoActual:0,volActual:0,hasFragil:false,hasArriba:false};
+
+  allItems.forEach(item=>{
+    const volItem=item.largo*item.ancho*item.alto||(cajaVol*0.05);
+    const fitsVol=(cur.volActual+volItem)<=cajaVol*0.9;
+    const fitsPeso=(cur.pesoActual+item.peso)<=cajaRef.peso_max;
+    if(fitsVol&&fitsPeso){
+      cur.items.push(item);cur.pesoActual+=item.peso;cur.volActual+=volItem;
+      if(item.etiquetas.some(e=>e.includes('FRÁGIL'))) cur.hasFragil=true;
+      if(item.etiquetas.some(e=>e.includes('ARRIBA'))) cur.hasArriba=true;
+    } else {
+      if(cur.items.length>0) boxes.push({...cur,items:[...cur.items]});
+      cur={items:[item],pesoActual:item.peso,volActual:volItem||(cajaVol*0.05),
+        hasFragil:item.etiquetas.some(e=>e.includes('FRÁGIL')),
+        hasArriba:item.etiquetas.some(e=>e.includes('ARRIBA'))};
+    }
+  });
+  if(cur.items.length>0) boxes.push(cur);
+
+  let html='';
+  separados.forEach((s,i)=>{
+    const etqs=s.etiquetas.length>0
+      ?s.etiquetas.map(e=>`<span class="badge ${e.includes('ARRIBA')?'badge-arriba':'badge-fragil'}">⚠ ${e}</span>`).join('')
+      :'<span class="badge badge-none">sin etiquetas especiales</span>';
+    html+=`<div class="paquete">
+      <div class="paquete-header">
+        <div>
+          <div class="paquete-id">Paquete suelto ${i+1}</div>
+          <div class="paquete-items">${s.name}</div>
+        </div>
+        <div>${getCatChip(s.cat)}</div>
+      </div>
+      ${s.peso>0?`<div style="font-size:11px;color:var(--text-hint);font-family:'DM Mono',monospace;margin-bottom:4px">Peso: ${s.peso.toFixed(1)} kg</div>`:''}
+      <div class="badges">${etqs}</div>
+    </div>`;
+  });
+
+  boxes.forEach((box,i)=>{
+    const uniqueNames=[...new Set(box.items.map(it=>it.name))];
+    const resumen=uniqueNames.length<=4?uniqueNames.join(', '):`${uniqueNames.slice(0,3).join(', ')} y ${uniqueNames.length-3} productos más`;
+    const etqs=[
+      box.hasFragil?`<span class="badge badge-fragil">⚠ FRÁGIL / NO INVERTIR</span>`:'',
+      box.hasArriba?`<span class="badge badge-arriba">⚠ ESTE LADO ARRIBA</span>`:''
+    ].filter(Boolean).join('');
+    html+=`<div class="paquete">
+      <div class="paquete-header">
+        <div>
+          <div class="paquete-id">Caja ${i+1} — ${cajaRef.id}</div>
+          <div class="paquete-dims">${cajaRef.largo} × ${cajaRef.ancho} × ${cajaRef.alto} cm · ${box.pesoActual.toFixed(1)} kg</div>
+        </div>
+      </div>
+      <div class="paquete-items" style="margin:6px 0">${resumen}</div>
+      <div class="badges">${etqs||'<span class="badge badge-none">sin etiquetas especiales</span>'}</div>
+    </div>`;
+  });
+
+  document.getElementById('result-list').innerHTML=html||'<div style="text-align:center;padding:24px;color:var(--text-hint)">Sin datos suficientes para calcular. Carga el catálogo con pesos y dimensiones.</div>';
+
+  const totalPaq=separados.length+boxes.length;
+  const pesoTotal=[...separados.map(s=>s.peso||0),...boxes.map(b=>b.pesoActual)].reduce((a,b)=>a+b,0);
+  document.getElementById('summary-grid').innerHTML=`
+    <div class="summary-card"><div class="summary-label">Total paquetes</div><div class="summary-value">${totalPaq}</div></div>
+    <div class="summary-card"><div class="summary-label">Cajas estándar</div><div class="summary-value">${boxes.length}</div></div>
+    <div class="summary-card"><div class="summary-label">Peso total aprox.</div><div class="summary-value">${pesoTotal.toFixed(1)} kg</div></div>`;
+
+  document.getElementById('result-section').classList.remove('hidden');
+}
+
+renderCajas();
+</script>
+</body>
+</html>
