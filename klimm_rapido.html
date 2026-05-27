@@ -190,26 +190,38 @@ function parsePDF(text){
   const lines=text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
   const qtyRe=/^(\d+(?:[.,]\d+)?)\s*[Uu]nidades/;
   const skipWords=['descripcion','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','klimm','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','mexico','rfc','vertiz','kleensol','direccion','facturacion','francisco','grupo'];
-  const descStarts=['ayuda','con una','la formula','esta formula','el baston','el cepillo','el recogedor','la cubeta','fabricado','resistente','biodegradable','tamano','medidas','contenido','rollo con','elaboradas','ideal para','alto poder','su formula','cuenta con','base de','mide ','plegable','repuesto','la bomba','las bolsas'];
+  const descStarts=['ayuda','con una','la formula','esta formula','el baston','el cepillo','el recogedor','la cubeta','fabricado','resistente','biodegradable','tamano','medidas','contenido','rollo con','elaboradas','ideal para','alto poder','su formula','cuenta con','base de','mide ','plegable','repuesto','la bomba','las bolsas','nuestro','dejando','efectiva','rendidor','elimina','disuelve','combina','brinda','incluye','excelente','concentrada'];
+
+  function isSkipLine(l){
+    const low=norm(l);
+    return skipWords.some(function(w){return low.includes(w);})||
+      /^\$[\d,. ]+$/.test(l)||/^[\d.,]+$/.test(l)||
+      /^[A-Z]{2,6}$/.test(l)||l.length<4||/^\d+\/\d+/.test(l)||
+      /^#\s*de/.test(low)||/^av\./.test(low);
+  }
+
+  function isDescLine(l){
+    const low=norm(l);
+    return descStarts.some(function(w){return low.startsWith(w);})||
+      /^(con |la |el |los |las |su |esta |al |de |en |para |que |se |y )/.test(low)||
+      low.endsWith('.')||low.endsWith(',');
+  }
 
   for(let i=0;i<lines.length;i++){
     const m=lines[i].match(qtyRe);
     if(m){
       const qty=parseFloat(m[1].replace(',','.'));
-      const candidates=[];
-      for(let j=i-1;j>=Math.max(0,i-15);j--){
+      let j=i-1;
+      const nameParts=[];
+      while(j>=Math.max(0,i-20)){
         const l=lines[j];
-        const low=norm(l);
-        const isSkip=skipWords.some(function(w){return low.includes(w);})||/^\$[\d,. ]+$/.test(l)||/^[\d.,]+$/.test(l)||/^[A-Z]{2,6}$/.test(l)||l.length<4||/^\d+\/\d+/.test(l);
-        if(isSkip) break;
-        const isDesc=descStarts.some(function(w){return low.startsWith(w);})||/^(con |la |el |los |las |su |esta |al |de |en |para |que |se )/.test(low);
-        if(!isDesc) candidates.push(l);
+        if(isSkipLine(l)) break;
+        if(!isDescLine(l)) nameParts.unshift(l);
+        j--;
       }
-      if(candidates.length>0){
-        const name=candidates[candidates.length-1];
-        if(!products.find(function(p){return p.name===name;}))
-          products.push({name:name,qty:qty});
-      }
+      const nameCandidate=nameParts.slice(-2).join(' ').trim();
+      if(nameCandidate && nameCandidate.length>3 && !products.find(function(p){return p.name===nameCandidate;}))
+        products.push({name:nameCandidate,qty:qty});
     }
   }
 
