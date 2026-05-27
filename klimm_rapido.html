@@ -189,40 +189,51 @@ function parsePDF(text){
   const products=[];
   const lines=text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
   const qtyRe=/^(\d+(?:[.,]\d+)?)\s*[Uu]nidades/;
-  const skipWords=['descripcion','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','klimm','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','mexico','rfc','vertiz','kleensol','direccion','facturacion','francisco','grupo'];
-  const descStarts=['ayuda','con una','la formula','esta formula','el baston','el cepillo','el recogedor','la cubeta','fabricado','resistente','biodegradable','tamano','medidas','contenido','rollo con','elaboradas','ideal para','alto poder','su formula','cuenta con','base de','mide ','plegable','repuesto','la bomba','las bolsas','nuestro','dejando','efectiva','rendidor','elimina','disuelve','combina','brinda','incluye','excelente','concentrada'];
+  const hardSkip=['descripcion','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','narvarte','benito','cdmx','mexico','rfc','vertiz','kleensol','direccion','facturacion','francisco','grupo klmm','grupo klimm','bbva','oriente'];
+  const descPatterns=[/^(ayuda|con una|la formula|esta formula|el baston|el cepillo|el recogedor|la cubeta|fabricado|resistente|biodegradable|medidas|contenido|rollo con|elaboradas|ideal para|alto poder|su formula|cuenta con|base de|plegable|repuesto|la bomba|las bolsas|nuestro|dejando|efectiva|rendidor|elimina|disuelve|combina|brinda|incluye|excelente|concentrada|permite|tamaño|tamano|sus fibras)/,/^(con |la |el |los |las |su |esta |al |de |en |para |que |se |y |no )/,/\d+\s*cm/,/\d+\s*gr/,/\d+\s*ml/,/\d+\s*lt/];
 
-  function isSkipLine(l){
+  function isHardSkip(l){
     const low=norm(l);
-    return skipWords.some(function(w){return low.includes(w);})||
-      /^\$[\d,. ]+$/.test(l)||/^[\d.,]+$/.test(l)||
-      /^[A-Z]{2,6}$/.test(l)||l.length<4||/^\d+\/\d+/.test(l)||
-      /^#\s*de/.test(low)||/^av\./.test(low);
+    return hardSkip.some(function(w){return low.includes(w);})||
+      /^\$[\d,. ]+$/.test(l)||/^[\d.,]+\s*$/.test(l)||
+      /^[A-Z]{2,6}$/.test(l)||l.length<3||/^\d+\s*\/\s*\d+/.test(l)||
+      /^#/.test(l)||/^0\d{9,}/.test(l);
   }
 
-  function isDescLine(l){
+  function isDesc(l){
     const low=norm(l);
-    return descStarts.some(function(w){return low.startsWith(w);})||
-      /^(con |la |el |los |las |su |esta |al |de |en |para |que |se |y )/.test(low)||
-      low.endsWith('.')||low.endsWith(',');
+    return descPatterns.some(function(r){return r.test(low);});
+  }
+
+  function isProductName(l){
+    return !isHardSkip(l) && !isDesc(l);
   }
 
   for(let i=0;i<lines.length;i++){
     const m=lines[i].match(qtyRe);
-    if(m){
-      const qty=parseFloat(m[1].replace(',','.'));
-      let j=i-1;
-      const nameParts=[];
-      while(j>=Math.max(0,i-20)){
-        const l=lines[j];
-        if(isSkipLine(l)) break;
-        if(!isDescLine(l)) nameParts.unshift(l);
-        j--;
+    if(!m) continue;
+    const qty=parseFloat(m[1].replace(',','.'));
+
+    // Busca hacia atrás saltando descripciones para encontrar el nombre
+    // Recopila segmentos de nombre (pueden ser 1 o 2 líneas contiguas)
+    const nameLines=[];
+    for(let j=i-1;j>=Math.max(0,i-20);j--){
+      const l=lines[j];
+      if(isHardSkip(l)) break;
+      if(isProductName(l)){
+        nameLines.unshift(l);
+        // Si encontramos al menos una línea de nombre y la siguiente (j-1) es skip o desc, paramos
+        if(nameLines.length>=1){
+          const prev=j>0?lines[j-1]:'';
+          if(!prev || isHardSkip(prev) || isDesc(prev)) break;
+          if(nameLines.length>=2) break;
+        }
       }
-      const nameCandidate=nameParts.slice(-2).join(' ').trim();
-      if(nameCandidate && nameCandidate.length>3 && !products.find(function(p){return p.name===nameCandidate;}))
-        products.push({name:nameCandidate,qty:qty});
     }
+
+    const name=nameLines.join(' ').trim();
+    if(name && name.length>3 && !products.find(function(p){return p.name===name;}))
+      products.push({name:name,qty:qty});
   }
 
   detectedProducts=products;
