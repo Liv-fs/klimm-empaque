@@ -201,19 +201,24 @@ function parsePDF(text){
   const products=[];
   const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
   const qtyRe=/^(\d+(?:[.,]\d+)?)\s*[Uu]nidades/;
-  const skipWords=['descripcion','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','klimm','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','mexico','rfc','vertiz','kleensol','direccion'];
+  const skipWords=['descripcion','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','klimm','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','mexico','rfc','vertiz','kleensol','direccion','facturacion','francisco','grupo'];
+  const descWords=['ayuda a','con una','la formula','esta formula','el baston','el cepillo','el recogedor','la cubeta','fabricado','resistente','biodegradable','tamaño','medidas','contenido','rollo con','elaboradas','ideal para','alto poder','su formula','cuenta con','base de','mide ','plegable','repuesto'];
 
   for(let i=0;i<lines.length;i++){
     const m=lines[i].match(qtyRe);
     if(m){
       const qty=parseFloat(m[1].replace(',','.'));
       let name='';
-      for(let j=i-1;j>=Math.max(0,i-5);j--){
+      const candidates=[];
+      for(let j=i-1;j>=Math.max(0,i-15);j--){
         const l=lines[j];
         const low=norm(l);
-        const skip=skipWords.some(w=>low.includes(w))||l.match(/^\$[\d,. ]+$/)||l.match(/^[\d.,]+$/)||l.match(/^[A-Z]{2,6}$/)||l.length<4;
-        if(!skip){name=l;break;}
+        const isSkip=skipWords.some(w=>low.includes(w))||l.match(/^\$[\d,. ]+$/)||l.match(/^[\d.,]+$/)||l.match(/^[A-Z]{2,6}$/)||l.length<4||l.match(/^\d+\/\d+/);
+        const isDesc=descWords.some(w=>low.startsWith(w))||low.match(/^(con |la |el |los |las |su |esta |al |de |en |para |que |se )/);
+        if(isSkip) break;
+        if(!isDesc) candidates.push(l);
       }
+      if(candidates.length>0) name=candidates[candidates.length-1];
       if(name && !products.find(p=>p.name===name))
         products.push({name,qty});
     }
@@ -222,6 +227,7 @@ function parsePDF(text){
   detectedProducts=products;
   document.getElementById('pdf-status').innerHTML=`<div class="alert alert-success">✓ ${products.length} productos detectados.</div>`;
   renderResult();
+}
 }
 
 function findInCatalog(name){
