@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klimm — Cotización rápida</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFF;--border:#E2E0D8;--border-strong:#C8C6BC;
+  --text:#1A1A18;--muted:#6B6960;--hint:#A8A69E;
+  --accent:#1A6B4A;--accent-bg:#E8F4EE;
+  --warn-bg:#FEF3E2;--warn-text:#92560A;
+  --danger-bg:#FDECEA;--danger-text:#8B2020;
+  --success-bg:#E8F4EE;--success-text:#1A6B4A;
+  --info-bg:#E8EEF8;--info-text:#1A3A6B;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.logo-sub{font-size:12px;color:var(--muted);margin-left:4px;font-family:'DM Sans',sans-serif;font-weight:400}
+.badge-version{font-size:11px;background:var(--warn-bg);color:var(--warn-text);padding:3px 10px;border-radius:20px;font-weight:500}
+main{max-width:760px;margin:0 auto;padding:32px 24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+input[type=url]{width:100%;font-size:13px;font-family:'DM Sans',sans-serif;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;transition:border 0.15s}
+input[type=url]:focus{border-color:var(--accent)}
+button{font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;font-weight:500}
+.btn-primary{background:var(--accent);color:#fff;border:none}
+.btn-primary:hover{background:#155a3d}
+.btn-secondary{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border-strong);color:var(--text)}
+.alert{font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-top:10px;line-height:1.5}
+.alert-info{background:var(--info-bg);color:var(--info-text)}
+.alert-warn{background:var(--warn-bg);color:var(--warn-text)}
+.alert-success{background:var(--success-bg);color:var(--success-text)}
+.upload-area{border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-text{font-size:14px;color:var(--muted)}
+.upload-sub{font-size:12px;color:var(--hint);margin-top:4px}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.summary-card{background:var(--bg);border-radius:var(--radius-sm);padding:14px 16px}
+.summary-label{font-size:11px;color:var(--hint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.summary-value{font-size:24px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text)}
+.summary-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.pkg-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.pkg-row:last-child{border-bottom:none}
+.pkg-type{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.pkg-CAJA{background:#F1EFE8;color:#4A4840}
+.pkg-BIDON{background:#FDECEA;color:#8B2020}
+.pkg-LARGA{background:#E8EEF8;color:#1A3A6B}
+.pkg-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.cotiza-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px}
+.cotiza-title{font-size:13px;font-weight:500;margin-bottom:10px}
+.cotiza-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.cotiza-label{color:var(--muted)}
+.cotiza-value{font-family:'DM Mono',monospace;font-weight:500}
+.warn-note{font-size:12px;background:var(--warn-bg);color:var(--warn-text);border-radius:var(--radius-sm);padding:8px 12px;margin-top:10px}
+.missing-list{font-size:12px;color:var(--danger-text);background:var(--danger-bg);border-radius:var(--radius-sm);padding:10px 14px;margin-top:8px;line-height:1.8}
+.hidden{display:none}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="logo">klimm<span>.</span><span class="logo-sub">cotización rápida</span></span>
+  </div>
+  <span class="badge-version">versión simplificada</span>
+</header>
+
+<main>
+
+  <div class="card">
+    <div class="card-title">Google Sheets — catálogo</div>
+    <label>URL del Google Sheet (público, pestaña "Catalogo")</label>
+    <input type="url" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/...">
+    <div class="btn-row">
+      <button class="btn-primary" onclick="loadSheet()">↻ Cargar catálogo</button>
+    </div>
+    <div id="sheet-status"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cotización PDF de Odoo</div>
+    <div class="upload-area" onclick="document.getElementById('pdf-input').click()">
+      <div style="font-size:28px;color:var(--hint)">⬆</div>
+      <div class="upload-text">Haz clic para seleccionar el PDF</div>
+      <div class="upload-sub" id="pdf-name">Cotización exportada desde Odoo</div>
+    </div>
+    <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="handlePDF(this)">
+    <div id="pdf-status"></div>
+  </div>
+
+  <div id="result-section" class="hidden">
+    <div class="card">
+      <div class="card-title">Resumen para cotizar</div>
+      <div class="summary-grid" id="summary-grid"></div>
+      <div id="missing-section"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Desglose de paquetes</div>
+      <div id="pkg-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Datos para transportista</div>
+      <div id="cotiza-list"></div>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const CAJA_PESO = 15;
+const TIPOS = {
+  LIQUID_20L: 'BIDON',
+  BULK_LONG: 'LARGA',
+  BULK_RIGID: 'LARGA',
+  LIQUID_5L: 'CAJA',
+  PAPER_BULK: 'CAJA',
+  BOXABLE: 'CAJA',
+  BOXABLE_TOP: 'CAJA',
+};
+const TIPO_DIMS = {
+  CAJA: {dims:'40×40×40 cm', pesoRef: CAJA_PESO},
+  BIDON: {dims:'30×30×45 cm', pesoRef: 21},
+  LARGA: {dims:'170×25×20 cm', pesoRef: 12},
+};
+
+let catalog = {};
+let detectedProducts = [];
+
+function norm(s){
+  if(!s) return '';
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+
+function parseCSVRow(row){
+  const result=[];let cur='';let inQ=false;
+  for(let i=0;i<row.length;i++){
+    const ch=row[i];
+    if(ch==='"'){if(inQ&&row[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}
+    else if(ch===','&&!inQ){result.push(cur.trim());cur='';}
+    else{cur+=ch;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+async function loadSheet(){
+  const url=document.getElementById('sheet-url').value.trim();
+  const st=document.getElementById('sheet-status');
+  if(!url){st.innerHTML='<div class="alert alert-warn">Ingresa la URL del Sheet.</div>';return;}
+  const match=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(!match){st.innerHTML='<div class="alert alert-warn">URL no válida.</div>';return;}
+  st.innerHTML='<div class="alert alert-info">Cargando catálogo...</div>';
+  try{
+    const res=await fetch(`https://docs.google.com/spreadsheets/d/${match[1]}/gviz/tq?tqx=out:csv&sheet=Catalogo`);
+    if(!res.ok) throw new Error();
+    const text=await res.text();
+    const lines=text.trim().split('\n');
+    const cols=parseCSVRow(lines[0]).map(c=>c.toLowerCase().trim());
+    catalog={};
+    for(let i=1;i<lines.length;i++){
+      const vals=parseCSVRow(lines[i]);
+      const r={};
+      cols.forEach((c,j)=>{r[c]=vals[j]||null;});
+      if(r.nombre) catalog[norm(r.nombre)]={cat:r.categoria_empaque, peso:parseFloat(r.peso_kg)||0};
+    }
+    st.innerHTML=`<div class="alert alert-success">✓ ${Object.keys(catalog).length} productos cargados.</div>`;
+    if(detectedProducts.length>0) renderResult();
+  }catch(e){
+    st.innerHTML='<div class="alert alert-warn">No se pudo cargar. Verifica que sea público y la pestaña se llame "Catalogo".</div>';
+  }
+}
+
+async function handlePDF(input){
+  const file=input.files[0];
+  if(!file) return;
+  document.getElementById('pdf-name').textContent=file.name;
+  document.getElementById('pdf-status').innerHTML='<div class="alert alert-info">Leyendo PDF...</div>';
+  try{
+    const ab=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let fullText='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i);
+      const tc=await page.getTextContent();
+      fullText+=tc.items.map(it=>it.str).join(' ')+'\n';
+    }
+    parsePDF(fullText);
+  }catch(e){
+    document.getElementById('pdf-status').innerHTML='<div class="alert alert-warn">Error al leer el PDF.</div>';
+  }
+}
+
+function parsePDF(text){
+  const products=[];
+  const qtyRe=/([0-9]+(?:[.,][0-9]+)?)\s*[Uu]nidades/g;
+  const allMatches=[...text.matchAll(qtyRe)];
+  const skipWords=['descripci','cantidad','precio','impuesto','importe','iva','subtotal','total','datos bancarios','klimm','beneficiario','banco','plazo','terminos','pagina','fecha','vencimiento','comercial','presupuesto','narvarte','benito','cdmx','mexico','rfc','vertiz'];
+
+  allMatches.forEach(m=>{
+    const before=text.substring(Math.max(0,m.index-400),m.index);
+    const lines=before.split(/\n/).map(l=>l.trim()).filter(l=>l.length>3);
+    const validLines=lines.filter(l=>{
+      const low=norm(l);
+      return !skipWords.some(w=>low.includes(w))&&!l.match(/^\$[\d,. ]+$/)&&!l.match(/^[\d.,]+$/)&&!l.match(/^[A-Z]{2,5}$/);
+    });
+    if(validLines.length>0){
+      const name=validLines[validLines.length-1];
+      const qty=parseFloat(m[1].replace(',','.'));
+      if(!products.find(p=>p.name===name))
+        products.push({name,qty});
+    }
+  });
+
+  detectedProducts=products;
+  document.getElementById('pdf-status').innerHTML=`<div class="alert alert-success">✓ ${products.length} productos detectados.</div>`;
+  renderResult();
+}
+
+function findInCatalog(name){
+  const key=norm(name);
+  if(catalog[key]) return catalog[key];
+  for(const [k,v] of Object.entries(catalog)){
+    if(key.length>10 && (k.includes(key.substring(0,15))||key.includes(k.substring(0,15)))) return v;
+  }
+  return null;
+}
+
+function renderResult(){
+  if(detectedProducts.length===0) return;
+  document.getElementById('result-section').classList.remove('hidden');
+
+  let totalCajas=0, totalBidones=0, totalLargas=0;
+  let pesoCajas=0, pesoBidones=0, pesoLargas=0;
+  let cajasBoxPeso=0;
+  const missing=[];
+  const pkgLines=[];
+
+  detectedProducts.forEach(p=>{
+    const data=findInCatalog(p.name);
+    if(!data){
+      missing.push(p.name);
+      cajasBoxPeso += p.qty * 1.5;
+      pkgLines.push({name:p.name,qty:p.qty,tipo:'CAJA',detail:'sin datos — estimado 1.5 kg/u',estimated:true});
+      return;
+    }
+    const tipo = TIPOS[String(data.cat).toUpperCase().trim()] || 'CAJA';
+    const peso = data.peso || 1;
+
+    if(tipo==='BIDON'){
+      totalBidones+=p.qty;
+      pesoBidones+=p.qty*peso;
+      pkgLines.push({name:p.name,qty:p.qty,tipo,detail:`${p.qty} pzas · ${peso} kg c/u`,estimated:false});
+    } else if(tipo==='LARGA'){
+      totalLargas+=p.qty;
+      pesoLargas+=p.qty*peso;
+      pkgLines.push({name:p.name,qty:p.qty,tipo,detail:`${p.qty} pzas · ${peso} kg c/u`,estimated:false});
+    } else {
+      cajasBoxPeso+=p.qty*peso;
+      pkgLines.push({name:p.name,qty:p.qty,tipo,detail:`${p.qty} u · ${peso} kg c/u = ${(p.qty*peso).toFixed(1)} kg`,estimated:false});
+    }
+  });
+
+  const nCajas=Math.ceil(cajasBoxPeso/CAJA_PESO);
+  totalCajas=nCajas;
+  pesoCajas=cajasBoxPeso;
+  const totalPaq=totalCajas+totalBidones+totalLargas;
+  const pesoTotal=pesoCajas+pesoBidones+pesoLargas;
+
+  document.getElementById('summary-grid').innerHTML=`
+    <div class="summary-card"><div class="summary-label">Total paquetes</div><div class="summary-value">${totalPaq}</div></div>
+    <div class="summary-card"><div class="summary-label">Peso total aprox.</div><div class="summary-value">${pesoTotal.toFixed(0)} kg</div></div>
+    <div class="summary-card"><div class="summary-label">Pieza más larga</div><div class="summary-value">${totalLargas>0?'170 cm':'40 cm'}</div></div>`;
+
+  const pkgHtml=pkgLines.map(p=>`
+    <div class="pkg-row">
+      <div>
+        <div style="font-size:13px;color:var(--text)">${p.name}${p.estimated?' <span style="color:var(--hint);font-size:11px">[estimado]</span>':''}</div>
+        <div class="pkg-detail">${p.detail}</div>
+      </div>
+      <span class="pkg-type pkg-${p.tipo}">${p.tipo}</span>
+    </div>`).join('');
+
+  document.getElementById('pkg-list').innerHTML=pkgHtml;
+
+  const missingHtml=missing.length>0
+    ?`<div class="missing-section"><div style="font-size:12px;color:var(--danger-text);background:var(--danger-bg);border-radius:var(--radius-sm);padding:10px 14px;line-height:1.8"><strong>${missing.length} productos sin datos en catálogo</strong> (estimados a 1.5 kg/u):<br>${missing.join('<br>')}</div></div>`:'';
+  document.getElementById('missing-section').innerHTML=missingHtml;
+
+  const cotizaHtml=`
+    <div class="cotiza-card">
+      <div class="cotiza-title">Resumen para Tresguerras / Paquetexpress</div>
+      <div class="cotiza-row"><span class="cotiza-label">Tipo de servicio</span><span class="cotiza-value">Carga consolidada</span></div>
+      <div class="cotiza-row"><span class="cotiza-label">Origen</span><span class="cotiza-value">53569 CDMX</span></div>
+      <div class="cotiza-row"><span class="cotiza-label">Total bultos</span><span class="cotiza-value">${totalPaq}</span></div>
+      <div class="cotiza-row"><span class="cotiza-label">Peso total</span><span class="cotiza-value">${pesoTotal.toFixed(0)} kg</span></div>
+      <div class="cotiza-row"><span class="cotiza-label">Cajas 40×40×40 cm</span><span class="cotiza-value">${totalCajas} pzas · ~${CAJA_PESO} kg c/u</span></div>
+      ${totalBidones>0?`<div class="cotiza-row"><span class="cotiza-label">Bidones 20L sueltos</span><span class="cotiza-value">${totalBidones} pzas · 21 kg c/u · 30×30×45 cm</span></div>`:''}
+      ${totalLargas>0?`<div class="cotiza-row"><span class="cotiza-label">Piezas largas emplayadas</span><span class="cotiza-value">${totalLargas} pzas · hasta 170 cm largo</span></div>`:''}
+      <div class="cotiza-row"><span class="cotiza-label">Mercancía</span><span class="cotiza-value">Productos de limpieza</span></div>
+      <div class="cotiza-row"><span class="cotiza-label">¿Mat. peligrosos?</span><span class="cotiza-value">No</span></div>
+      ${totalLargas>0?`<div class="warn-note">⚠ Mencionar explícitamente: piezas de hasta 170 cm de largo (estructuras mop, bastones, mechudos).</div>`:''}
+    </div>`;
+
+  document.getElementById('cotiza-list').innerHTML=cotizaHtml;
+}
+</script>
+</body>
+</html>
