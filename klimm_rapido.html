@@ -316,7 +316,7 @@ function extractCotNum(text){
 
 // --- AI PRODUCT EXTRACTION ---
 async function extractProductsAI(pdfText){
-  const prompt='Extrae todos los productos de esta cotización de Odoo. Para cada producto devuelve SOLO un JSON array con objetos {nombre, cantidad}. El nombre debe ser exactamente como aparece en la cotización, sin descripciones. La cantidad es el número antes de "Unidades". No incluyas nada más, solo el JSON array.\n\nCotización:\n'+pdfText.substring(0,8000);
+  const prompt='Eres un extractor de datos. Extrae todos los productos de esta cotización. Responde ÚNICAMENTE con un JSON array válido, sin texto antes ni después, sin backticks, sin explicaciones. Formato exacto: [{"nombre":"nombre del producto","cantidad":3},{"nombre":"otro producto","cantidad":1}]. El nombre es el título del producto (no la descripción). La cantidad es el número entero antes de Unidades.\n\nCotización:\n'+pdfText.substring(0,8000);
 
   const apiKey=getApiKey();
   if(!apiKey){throw new Error('No hay API key configurada — ve a Configuración y guarda tu API key de Anthropic');}
@@ -336,10 +336,21 @@ async function extractProductsAI(pdfText){
   }
 
   const data=await response.json();
+  if(!data.content||!data.content[0]) throw new Error('Respuesta vacía de la API');
   const raw=data.content[0].text;
-  const jsonMatch=raw.match(/\[[\s\S]*\]/);
-  if(!jsonMatch) throw new Error('No se pudo parsear la respuesta de IA');
-  return JSON.parse(jsonMatch[0]);
+  // Intenta extraer JSON array de la respuesta
+  const jsonMatch=raw.match(/\[[\s\S]*?\]/);
+  if(jsonMatch){
+    try{return JSON.parse(jsonMatch[0]);}catch(e){}
+  }
+  // Intenta extraer JSON con backticks
+  const codeMatch=raw.match(/```(?:json)?([\s\S]*?)```/);
+  if(codeMatch){
+    try{return JSON.parse(codeMatch[1].trim());}catch(e){}
+  }
+  // Intenta parsear todo el texto como JSON
+  try{return JSON.parse(raw.trim());}catch(e){}
+  throw new Error('No se pudo parsear la respuesta de IA. Respuesta: '+raw.substring(0,200));
 }
 
 // --- CATALOG LOOKUP ---
