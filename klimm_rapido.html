@@ -358,11 +358,19 @@ async function extractProductsAI(pdfText){
 // --- CATALOG LOOKUP ---
 function findInCatalog(name){
   const key=norm(name);
+  // Match exacto
   if(catalog[key]) return catalog[key];
+  // Match por palabras clave — requiere que al menos 70% de las palabras del nombre coincidan
+  const keyWords=key.split(' ').filter(function(w){return w.length>3;});
+  if(keyWords.length===0) return null;
+  let bestMatch=null;
+  let bestScore=0;
   for(const k in catalog){
-    if(key.length>8&&(k.includes(key.substring(0,12))||key.includes(key.substring(0,12)))) return catalog[k];
+    const matched=keyWords.filter(function(w){return k.includes(w);}).length;
+    const score=matched/keyWords.length;
+    if(score>bestScore&&score>=0.7){bestScore=score;bestMatch=catalog[k];}
   }
-  return null;
+  return bestMatch;
 }
 
 // --- CALCULATE PACKING ---
@@ -373,10 +381,11 @@ function calcPacking(products){
   let totalFound=0,totalProducts=0;
 
   // Filtrar productos de envío/flete
-  const shipKeywords=['envio','flete','entrega','shipping','cargo de envio','costo de envio','tresguerras','paquetexpress','redpack','estafeta'];
+  const shipKeywords=['envio','flete','shipping','cargo envio','costo envio','tresguerras','paquetexpress','redpack','estafeta','servicio entrega'];
   const filtered=products.filter(function(p){
     const low=norm(p.nombre);
-    return !shipKeywords.some(function(k){return low.includes(k);});
+    const isShip=shipKeywords.some(function(k){return low.includes(k);});
+    return !isShip;
   });
 
   filtered.forEach(function(p){
