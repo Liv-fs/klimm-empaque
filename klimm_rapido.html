@@ -302,9 +302,11 @@ async function readPDF(file){
 
 // --- CP EXTRACTION ---
 function extractCP(text){
-  const entregaMatch=text.match(/Direcci[oó]n de Entrega[\s\S]{0,500}/i);
-  const searchArea=entregaMatch?entregaMatch[0]:text.substring(0,600);
-  const cpMatch=searchArea.match(/\b(\d{5})\b/);
+  const entregaMatch=text.match(/Direcci[oó]n de Entrega[\s\S]{0,400}/i);
+  if(!entregaMatch) return null;
+  const searchArea=entregaMatch[0];
+  // Busca patron: 5 digitos seguidos de espacio y texto (ciudad), no solo numeros solos
+  const cpMatch=searchArea.match(/\b(\d{5})\s+[A-Za-z]/);
   return cpMatch?cpMatch[1]:null;
 }
 
@@ -366,23 +368,29 @@ function findInCatalog(name){
 // --- CALCULATE PACKING ---
 function calcPacking(products){
   let totalBidones=0,totalLargas=0,cajasBoxPeso=0,pesoBidones=0,pesoLargas=0;
-  let pesoReal=0,pesoEstimado=0;
   const missing=[];
   const pkgLines=[];
+  let totalFound=0,totalProducts=0;
 
-  products.forEach(function(p){
+  // Filtrar productos de envío/flete
+  const shipKeywords=['envio','flete','entrega','shipping','cargo de envio','costo de envio','tresguerras','paquetexpress','redpack','estafeta'];
+  const filtered=products.filter(function(p){
+    const low=norm(p.nombre);
+    return !shipKeywords.some(function(k){return low.includes(k);});
+  });
+
+  filtered.forEach(function(p){
+    totalProducts++;
     const data=findInCatalog(p.nombre);
     if(!data){
       missing.push(p.nombre);
-      const est=p.cantidad*1.5;
-      cajasBoxPeso+=est;
-      pesoEstimado+=est;
-      pkgLines.push({name:p.nombre,qty:p.cantidad,tipo:'CAJA',detail:'sin datos en catálogo — estimado 1.5 kg/u',estimated:true});
+      // NO se incluye en el cálculo — se excluye completamente
+      pkgLines.push({name:p.nombre,qty:p.cantidad,tipo:'?',detail:'No encontrado en catálogo — excluido del cálculo',estimated:true});
       return;
     }
+    totalFound++;
     const tipo=TIPOS[String(data.cat).toUpperCase().trim()]||'CAJA';
     const peso=data.peso||1;
-    pesoReal+=p.cantidad*peso;
     if(tipo==='BIDON'){
       totalBidones+=p.cantidad;pesoBidones+=p.cantidad*peso;
       pkgLines.push({name:p.nombre,qty:p.cantidad,tipo:tipo,detail:p.cantidad+' pzas · '+peso+' kg c/u',estimated:false});
@@ -398,9 +406,10 @@ function calcPacking(products){
   const totalCajas=Math.ceil(cajasBoxPeso/CAJA_PESO);
   const pesoTotal=cajasBoxPeso+pesoBidones+pesoLargas;
   const totalPaq=totalCajas+totalBidones+totalLargas;
-  const confidence=pesoTotal>0?Math.round(pesoReal/(pesoReal+pesoEstimado)*100):0;
+  const confidence=totalProducts>0?Math.round(totalFound/totalProducts*100):0;
+  const isPartial=missing.length>0;
 
-  return {totalCajas,totalBidones,totalLargas,totalPaq,pesoTotal,confidence,missing,pkgLines,cajasBoxPeso};
+  return {totalCajas,totalBidones,totalLargas,totalPaq,pesoTotal,confidence,missing,pkgLines,cajasBoxPeso,isPartial,totalFound,totalProducts};
 }
 
 // --- PROCESS ALL ---
@@ -454,7 +463,7 @@ function renderResults(){
       :'<div class="alert alert-warn" style="margin-top:6px">No se encontró CP en el PDF — <span style="display:inline-flex;align-items:center;gap:6px">ingresa manualmente: <input type="text" id="cp-'+idx+'" placeholder="00000" style="width:80px;font-size:12px;padding:4px 8px" onchange="setManualCP('+idx+',this.value)"></span></div>';
 
     const missingHtml=p.missing.length>0
-      ?'<div class="missing-box"><strong>'+p.missing.length+' producto(s) no encontrados en catálogo</strong> — agrégalos al Sheet para mejorar la precisión:<br>'+
+      ?'<div class="missing-box"><strong>⚠ '+p.missing.length+' producto(s) excluidos del cálculo</strong> — no están en el catálogo. Agrégalos al Sheet con sus datos para incluirlos:<br>'+
         p.missing.map(function(m){return '• '+m;}).join('<br>')+'</div>':'' ;
 
     const pkgHtml=p.pkgLines.map(function(l){
@@ -510,7 +519,7 @@ function buildResultText(r){
   if(p.totalLargas>0) lines.push('Piezas largas emplayadas: '+p.totalLargas+' pzas · hasta 170 cm');
   lines.push('Mercancía: Productos de limpieza (sin materiales peligrosos)');
   if(p.totalLargas>0) lines.push('⚠ Mencionar: piezas de hasta 170 cm (mops, bastones, mechudos)');
-  if(p.missing.length>0) lines.push('⚠ Confianza '+p.confidence+'% — '+p.missing.length+' producto(s) sin datos en catálogo');
+  if(p.isPartial) lines.push('⚠ RESULTADO PARCIAL: '+p.totalFound+' de '+p.totalProducts+' productos encontrados en catálogo — '+p.missing.length+' excluidos del cálculo');
   return lines.join('\n');
 }
 
